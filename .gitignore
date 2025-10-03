@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Виртуальные окружения
+.venv/
+venv/
+
+# Зависимости
+poetry.lock
+
+# Pre-commit
+.pre-commit-config.yaml
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Логи
+*.log
+
+# Секреты
+.env
+
+# Правила для конкретных папок
+
+# configs: игнорируем всё, кроме .yaml и .gitkeep
+configs/*
+!configs/*.yaml
+!configs/.gitkeep
+
+# images: игнорируем всё, кроме .png, .jpg, .jpeg и .gitkeep
+images/*
+!images/*.png
+!images/*.jpg
+!images/*.jpeg
+!images/.gitkeep
+
+# dashboard/powerbi: игнорируем всё, кроме .pbix и .gitkeep
+dashboard/powerbi/*
+!dashboard/powerbi/*.pbix
+!dashboard/powerbi/.gitkeep
+
+# data/raw, data/processed, src, dashboard/superset/
+
