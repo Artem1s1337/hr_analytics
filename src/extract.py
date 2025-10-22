@@ -1,42 +1,10 @@
 import numpy as np
+import pandas as pd
 import requests
 import time
 from tqdm import tqdm
-import re
 
-def get_it_roles():
-    '''Возвращает специализации в IT в виде списка строк.
-
-    В список не включён менеджмент и руководящие должности.
-    '''
-
-    # Адрес с профессиональными ролями
-    url = 'https://api.hh.ru/professional_roles'
-    response = requests.get(url)  # GET запрос
-    jsn = response.json().get('categories')
-
-    # Собиараем словарь IT-специализации
-    it_dict = dict()
-    for i in jsn:
-        if i.get('id') == '11':
-            it_dict.update(i)
-
-    # Собираем роли без менеждмента и техподдержки
-    it_roles = [i.get('id') for i in it_dict.get('roles') if  i.get('id') not in ['12', '36', '73', '155', '104', '157', '107', '125', '121']]
-    return it_roles  # возвращаем список
-
-    # id ролей только в аналитике
-    # analytics = ['165', '156', '10', '150', '164', '148']
-
-def get_vacancies(period=30, cities=['1', '2', '3', '4', '88'], roles=get_it_roles()):
-    '''
-    Отбирает вакансии без описания и ключевых навыков.
-
-    Параметры:
-    - period - период публикации в днях, по умолчанию 30
-    - города - топ-5 по населению в РФ: Москва, СПб, Екат, НСК, Казань
-    - роли - список из предыдущей функции
-    '''
+def get_vacancies(roles, cities, period=180):
 
     # Первоначальная настройка
     url = 'https://api.hh.ru/vacancies'
@@ -57,7 +25,6 @@ def get_vacancies(period=30, cities=['1', '2', '3', '4', '88'], roles=get_it_rol
             'professional_role': roles,
             'per_page': 100,
             'currency': 'RUR',
-            'only_with_salary': 'true',
             'page': page,
             'period': period,
             }
@@ -73,20 +40,22 @@ def get_vacancies(period=30, cities=['1', '2', '3', '4', '88'], roles=get_it_rol
                             {
                                'id': i.get('id'),
                                'name': i.get('name'),
-                               'group': [j.get('name') for j in i.get('professional_roles')][0],
-                               'city': i.get('area').get('name'),
                                'salary_from': np.nan if i.get('salary') is None else i.get('salary').get('from'),
                                'salary_to': np.nan if i.get('salary') is None else i.get('salary').get('to'),
+                               'currency': np.nan if i['salary'] is None else i.get('salary').get('currency'),
+                               'role': [j.get('name') for j in i.get('professional_roles')][0],
+                               'city': i.get('area').get('name'),
+                               'fmt': [j.get('id') for j in i.get('work_format')],
+                               'experience': i.get('experience').get('name'),
                                'employer': i.get('employer').get('name'),
-                               'work_format': [j.get('id') for j in i.get('work_format')],
-                               'experience': i.get('experience').get('name')
+                               'date': i.get('published_at')
                             }
                         )
                     page += 1  # обновление страницы
                     pbar.update(1)
 
                     # Таймауты для избежания бана со стороны API
-                    timeout = np.random.uniform(0.5, 2.0)
+                    timeout = np.random.uniform(0.5, 1.0)
                     time.sleep(timeout)
                 else:
                     break
@@ -112,19 +81,12 @@ def get_ids(lst):
         ids.append(i['id'])
     return ids
 
-def get_descriptions(ids, vacancies):
-    '''
-    Возвращает вакансии с добавленными навыками и описанием.
-
-    Параметры:
-    - ids - id вакансий
-    - vacancies - список словарей с вакансиями для обновления
-    '''
+def get_skills(ids, vacancies):
 
     # Первоначальная настройка
     user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36'
     headers = {'User-Agent': user_agent}
-    pbar = tqdm(total=len(vacancies), desc='Getting descriptions', colour='red', position=0)
+    pbar = tqdm(total=len(vacancies), desc='Getting skills', colour='red', position=0)
 
     # Итерируемся с использованием функции zip, чтобы использовать одновременно оба списка
     session = requests.Session()
@@ -136,12 +98,8 @@ def get_descriptions(ids, vacancies):
             response = session.get(url, headers=headers)
             if response.status_code == 200:
                 jsn = response.json()
-                key_skills = [skill.get('name') for skill in jsn.get('key_skills', [])] if jsn.get('key_skills') else []
-
-                # Очистка описания от HTML-тэгов
-                description_raw = jsn.get('description') or ''
-                description_clean = re.sub(r'<[^>]+>', '', description_raw)
-                vacancy.update({'key_skills': key_skills, 'description': description_clean})
+                key_skills = [skill.get('name') for skill in jsn.get('key_skills', [])] if jsn.get('key_skills') else np.nan
+                vacancy.update({'key_skills': key_skills})
             else:
                 print(response.status_code)
                 continue
@@ -158,3 +116,19 @@ def get_descriptions(ids, vacancies):
     pbar.close()
     session.close()
     return vacancies
+
+def main():
+    # Роли в аналитике и ML
+    analytics = ['165', '156', '10', '150', '164', '148']
+
+    # Топ-10 городов России по населению
+    cities = [1, 2, 3, 4, 115, 88, 104, 68, 78, 76]
+
+    vac = get_vacancies(analytics, cities)
+    ids = get_ids(vac)
+    full_vac = get_skills(ids, vac)
+    df = pd.DataFrame(full_vac)
+    df.to_csv('vacancies.csv', index=False)
+  
+if __name__ == "__main__":
+    main()
