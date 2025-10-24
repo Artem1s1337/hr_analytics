@@ -3,6 +3,8 @@ import pandas as pd
 import re
 import ast
 from collections import Counter
+import warnings
+warnings.filterwarnings('ignore')
 
 def main():
     path = input('Укажите путь к файлу: ')
@@ -153,6 +155,7 @@ def main():
 
     new_df['date'] = pd.to_datetime(new_df['date'], format="ISO8601")
     new_df['date'] = pd.to_datetime(new_df['date'], format="%d-%m-%Y")
+    new_df['date'] = new_df['date'].dt.date
 
     def parse_skills(text):
         try:
