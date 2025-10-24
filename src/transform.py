@@ -113,23 +113,22 @@ def main():
     new_df = salary_imputer(copy)
     new_df['currency'].fillna('RUR', inplace=True)
 
-    def neat_work_format(lst):
-        if not lst:  # пустой список
+    def fmt_converter(s):
+        s = s.strip().lower()
+        s = ast.literal_eval(s)
+        if s == []:
             return 'не указано'
-        if len(lst) == 1:
-            if "REMOTE" in lst:
-                return 'удалённо'
-            elif "ON_SITE" in lst:
+        elif len(s) == 1:
+            if s[0] == 'on_site':
                 return 'в офисе'
-            elif "FIELD_WORK" in lst:
-                return 'выездная работа'
-        if 'HYBRID' in lst and 'FIELD_WORK' not in lst:
+            if s[0] == 'remote':
+                return 'удалённо'
+            if s[0] == 'hybrid':
+                return 'гибрид'
+        elif len(s) > 1:
             return 'гибрид'
-        if 'FIELD_WORK' in lst:
-            return 'выездная работа'
-        return 'не указано'
 
-    new_df['fmt'] = new_df['fmt'].apply(neat_work_format)
+    new_df['fmt'] = new_df['fmt'].apply(fmt_converter)
 
     new_df = new_df[new_df['fmt'] != 'выездная работа']
 
