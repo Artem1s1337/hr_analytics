@@ -25,6 +25,10 @@ def main():
         "Самара",
     ])]
     copy['name'] = np.where(copy['name'], copy['name'].str.lower(), copy['name'])
+    copy['employer'] = copy['employer'].str.replace(', ', ' ')
+    copy['employer'] = copy['employer'].str.replace(',', '')
+    copy['role'] = copy['role'].str.replace(', ', ' ')
+    copy['role'] = copy['role'].str.replace(',', '')
 
     mask = copy['name'].str.contains(r'1[СC]', flags=re.I, na=False)
     copy.loc[mask, 'name'] = 'Аналитик 1С'
@@ -185,8 +189,12 @@ def main():
 
     new_df['key_skills'] = new_df.apply(fill_empty_skills, axis=1)
 
+    new_df['key_skills'] = new_df['key_skills'].apply(','.join)
+    # new_df['key_skills'] = new_df['key_skills'].str.replace('/', ' ')
+    # new_df['key_skills'] = new_df['key_skills'].str.replace(', ', '; ')
+
     try:
-        new_df.to_csv('/content/hr_analytics/data/processed/processed.csv', index=False)
+        new_df.to_csv(r'Z:\Repos\hr_analytics-1\data\processed\processed.csv', index=False)
     except Exception as e:
         print(f'Ошибка загрузки: {e}')
 
