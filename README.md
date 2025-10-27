@@ -66,8 +66,8 @@ poetry run python load.py  # предварительно создайте БД 
 ```
 Далее в БД необходимо запустить скрипт ERD: `erd_creation_query.sql` из папки `/sql` чтобы установить отношения между таблицами. Вот как это должно выглядеть:
 <img width="1314" height="882" alt="erd_schema" src="https://github.com/user-attachments/assets/9db1515e-de40-4e5b-9bdd-c13fd664366e" />
-Последним шагом будет запуск `vacancies_dashboard.pbix` из папки `/dash` и интеграция в него таблиц
-
+Последним шагом будет запуск `vacancies_dashboard.pbix` из папки `/dash` и интеграция в него таблиц. В итоге вы получите следующий дашборд:
+<img width="1302" height="731" alt="{C757EEE8-1B0B-424F-9A72-F09C0798F2A0}" src="https://github.com/user-attachments/assets/52d239f2-d86c-44a7-9f82-e9142b65f85a" />
 ## Ограничения
 Основное ограничение - лимит API на глубину запроса (пагинацию): <= 2000 вакансий, иными словами 20 страниц по 100 вакансий на страницу (это максимум):
 <img width="924" height="338" alt="image" src="https://github.com/user-attachments/assets/29c88f84-a2d3-4d09-9624-ad6ba36412be" />
